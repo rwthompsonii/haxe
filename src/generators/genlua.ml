@@ -47,6 +47,7 @@ type ctx = {
 	mutable found_expose : bool;
 	mutable lua_jit : bool;
 	mutable lua_ver : float;
+	mutable lua_flatten : bool;
 }
 
 type object_store = {
@@ -70,7 +71,14 @@ let get_exposed ctx path meta = try
 
 let dot_path = Globals.s_type_path
 
-let s_path ctx = dot_path
+let flat_path (p,s) =
+	(* Replace _ with __ in paths to prevent name collisions. *)
+	let escape str = String.concat "__" (ExtString.String.nsplit str "_") in
+	match p with
+	| [] -> "_hx." ^ (escape s)
+	| _ -> "_hx." ^ String.concat "_" (List.map escape p) ^ "_" ^ (escape s)
+
+let s_path ctx = if ctx.lua_flatten then flat_path else dot_path
 
 (* Lua requires decimal encoding for characters, rather than the hex *)
 (* provided by Ast.s_escape *)
@@ -1721,7 +1729,7 @@ let generate_type ctx = function
 			generate_class ctx c
 		else if Meta.has Meta.LuaRequire c.cl_meta && is_directly_used ctx.com c.cl_meta then
 			generate_require ctx c.cl_path c.cl_meta
-		else if Meta.has Meta.InitPackage c.cl_meta then
+		else if not ctx.lua_flatten && Meta.has Meta.InitPackage c.cl_meta then
 			(match c.cl_path with
 			| ([],_) -> ()
 			| _ -> generate_package_create ctx c.cl_path);
@@ -1738,11 +1746,13 @@ let generate_type_forward ctx = function
 		| None -> ()
 		| Some e ->
 			ctx.inits <- e :: ctx.inits);
-		if not c.cl_extern then begin
-		    generate_package_create ctx c.cl_path;
-		    let p = s_path ctx c.cl_path in
-		    println ctx "%s = _hx_e()" p;
+		let p = s_path ctx c.cl_path in
+		if not c.cl_extern && not ctx.lua_flatten then  begin
+			generate_package_create ctx c.cl_path;
+			println ctx "%s = _hx_e()" p;
 		end
+		else if not c.cl_extern then
+			println ctx "%s = _hx_e()" p;
 	| TEnumDecl e when e.e_extern ->
 		()
 	| TEnumDecl e ->
@@ -1771,6 +1781,7 @@ let alloc_ctx com =
 		separator = false;
 		found_expose = false;
 		lua_jit = Common.defined com Define.LuaJit;
+		lua_flatten = not (Common.defined com Define.LuaUnflatten);
 		lua_ver = try
 			float_of_string (PMap.find "lua_ver" com.defines)
 		    with | Not_found -> 5.2;
@@ -1778,9 +1789,9 @@ let alloc_ctx com =
 	ctx.type_accessor <- (fun t ->
 		let p = t_path t in
 		match t with
-		| TClassDecl ({ cl_extern = true } as c) when not (Meta.has Meta.LuaRequire c.cl_meta)
+		| TClassDecl ({ cl_extern = true } as c) when not (Meta.has Meta.JsRequire c.cl_meta)
 			-> dot_path p
-		| TEnumDecl { e_extern = true }
+		| TEnumDecl ({ e_extern = true } as e) when not (Meta.has Meta.JsRequire e.e_meta)
 			-> dot_path p
 		| _ -> s_path ctx p);
 	ctx
@@ -1859,6 +1870,8 @@ let generate com =
 	let ctx = alloc_ctx com in
 
 	Codegen.map_source_header com (fun s -> print ctx "-- %s\n" s);
+	if ctx.lua_flatten then
+	    println ctx "local _hx = {}";
 
 	if has_feature ctx "Class" || has_feature ctx "Type.getClassName" then add_feature ctx "lua.Boot.isClass";
 	if has_feature ctx "Enum" || has_feature ctx "Type.getEnumName" then add_feature ctx "lua.Boot.isEnum";
@@ -1972,14 +1985,23 @@ let generate com =
 	(* If we use haxe Strings, patch Lua's string *)
 	if has_feature ctx "use.string" then begin
 	    println ctx "local _hx_string_mt = _G.getmetatable('');";
-	    println ctx "String.__oldindex = _hx_string_mt.__index;";
-	    println ctx "_hx_string_mt.__index = String.__index;";
-	    println ctx "_hx_string_mt.__add = function(a,b) return Std.string(a)..Std.string(b) end;";
+	    if ctx.lua_flatten then begin
+		println ctx "_hx.String.__oldindex = _hx_string_mt.__index;";
+		println ctx "_hx_string_mt.__index = _hx.String.__index;";
+		println ctx "_hx_string_mt.__add = function(a,b) return _hx.Std.string(a).._hx.Std.string(b) end;";
+	    end else begin
+		println ctx "String.__oldindex = _hx_string_mt.__index;";
+		println ctx "_hx_string_mt.__index = String.__index;";
+		println ctx "_hx_string_mt.__add = function(a,b) return Std.string(a)..Std.string(b) end;";
+	    end;
 	    println ctx "_hx_string_mt.__concat = _hx_string_mt.__add";
 	end;
 
 	(* Array is required, always patch it *)
-	println ctx "_hx_array_mt.__index = Array.prototype";
+	if ctx.lua_flatten then
+	    println ctx "_hx_array_mt.__index = _hx.Array.prototype"
+	else
+	    println ctx "_hx_array_mt.__index = Array.prototype";
 	newline ctx;
 
 	(* Generate statics *)

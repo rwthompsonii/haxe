@@ -483,6 +483,7 @@ module Define = struct
 		| LoopUnrollMaxCost
 		| LuaVer
 		| LuaJit
+		| LuaUnflatten
 		| Macro
 		| MacroDebug
 		| MacroTimes
@@ -576,6 +577,7 @@ module Define = struct
 		| LoopUnrollMaxCost -> ("loop_unroll_max_cost","Maximum cost (number of expressions * iterations) before loop unrolling is canceled (default 250)")
 		| LuaJit -> ("lua_jit","Enable the jit compiler for lua (version 5.2 only")
 		| LuaVer -> ("lua_ver","The lua version to target")
+		| LuaUnflatten -> ("lua_unflatten","Generate nested objects for packages and types")
 		| Macro -> ("macro","Defined when code is compiled in the macro context")
 		| MacroDebug -> ("macro_debug","Show warnings for potential macro problems (e.g. macro-in-macro calls)")
 		| MacroTimes -> ("macro_times","Display per-macro timing when used with --times")
