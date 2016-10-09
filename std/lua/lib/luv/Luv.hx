@@ -448,7 +448,22 @@ extern class Misc {
 
 }
 
+@:luaRequire("luv")
+extern class Thread {
+  static function new_thread() : Timer;
+  @:native("new_thread") function new() : Void;
+  function equal() : Bool;
+  function self() : Thread;
+  function join() : Bool;
+  function sleep() : Void;
+}
 
+@:luaRequire("luv")
+extern class Work {
+  static function new_work() : Work;
+  @:native("new_work") function new() : Void;
+  static function queue_work(work : Work) : Bool;
+}
 
 @:multiType
 extern class ScandirNext {
