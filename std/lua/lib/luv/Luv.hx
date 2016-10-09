@@ -76,7 +76,7 @@ extern class Handle {
   function is_active() : Bool;
   function is_closing() : Bool;
   function close() : Void;
-  function ref() : Void; 
+  function ref() : Void;
   function unref() : Void;
   function has_ref() : Bool;
   function send_buffer_size(size : Int) : Int;
@@ -91,7 +91,7 @@ extern class Timer extends Handle {
 
   function start(timeout : Int, repeat : Int, cb : Void->Void) : Int;
   function stop() : Int;
-  function again() : Int; 
+  function again() : Int;
   function set_repeat(repeat : Int) : Void;
   function get_repeat() : Int;
 }
@@ -128,7 +128,7 @@ extern class Idle extends Handle {
 extern class Async extends Handle {
   static function new_async() : Async;
   @:native("new_async") function new() : Void;
-  function send() : Int; 
+  function send() : Int;
 }
 
 
@@ -164,7 +164,7 @@ typedef ProcessOptions = {
 }
 
 typedef StreamData = haxe.extern.EitherType<String,Table<Int,String>>;
-typedef SendHandle = Tcp; 
+typedef SendHandle = Tcp;
 
 @:luaRequire("luv")
 extern class Stream extends Handle {
@@ -174,7 +174,7 @@ extern class Stream extends Handle {
   function read_start(cb : BoolStatus) : Int;
   function read_stop() : Int;
   function write(data : StreamData, ?cb : BoolStatus) : Int;
-  function write2(data : StreamData, send_handle : SendHandle, cb: BoolStatus) : Int;  
+  function write2(data : StreamData, send_handle : SendHandle, cb: BoolStatus) : Int;
   function try_write(data : StreamData) : Int;
   function is_readable() : Bool;
   function is_writable() : Bool;
@@ -191,7 +191,7 @@ extern class Tcp extends Stream {
   function keepalive(enable : Bool, ?delay : Int) : Int;
   function simultaneous_accepts(enable : Bool) : Int;
   function bind(address : String, port : Int) : Int;
-  function getsockname() : Int; 
+  function getsockname() : Int;
   function getpeername() : String;
   function connect(host : String, port : Int, cb : BoolStatus) : Int;
   function write_queue_size() : Int;
@@ -279,51 +279,175 @@ extern class FileSystemPoll {
 @:luaRequire("luv")
 extern class FileSystem {
   @:native("fs_close")
-  @:overload(function(file : FileDescriptor) : Bool {})
-  static function close(file : FileDescriptor, cb : BoolStatus) : Int;
+  @:overload(function(file : FileDescriptor, cb : ResultStatus<Bool>) : Req {})
+  static function close(file : FileDescriptor) : Bool;
 
   @:native("fs_open")
-  @:overload(function(path : String, flags : Open, mode : Int) : FileDescriptor {})
-  static function open(path : String, flags : Open, mode : Int, ?cb : ResultStatus<FileDescriptor>) : Int;
+  @:overload(function(path : String, flags : Open, mode : Int, ?cb : ResultStatus<FileDescriptor>) : Req {})
+  static function open(path : String, flags : Open, mode : Int) : FileDescriptor;
 
   @:native("fs_read")
-  @:overload(function(file : FileDescriptor, ?len : Int, ?offset : Int) : String {} )
-  static function read(file : FileDescriptor, ?len : Int, ?offset : Int, ?cb : StringStatus) : Int;
+  @:overload(function(file : FileDescriptor, len : Int, offset : Int, ?cb : StringStatus) : Req {} )
+  static function read(file : FileDescriptor, len : Int, offset : Int) : String;
 
   @:native("fs_unlink")
-  @:overload(function(file : FileDescriptor) : String {} )
-  static function unlink(file : FileDescriptor, content : String, ?cb : ResultStatus<String>) : Int;
+  @:overload(function(file : FileDescriptor, ?cb : ResultStatus<String>) : Req {} )
+  static function unlink(file : FileDescriptor, content : String) : String;
 
   @:native("fs_write")
-  @:overload(function(file : FileDescriptor, content : String, offset : Int) : Bool {})
-  static function write(file : FileDescriptor, content : String, offset : Int, ?cb : BoolStatus) : Int;
+  @:overload(function(file : FileDescriptor, content : String, offset : Int, ?cb : BoolStatus) : Int {})
+  static function write(file : FileDescriptor, content : String, offset : Int) : Bool;
 
   @:native("fs_mkdir")
-  @:overload(function(path : String, mode : Int, cb : haxe.Constraints.Function ) : Bool {})
-  static function mkdir(path : String, mode :Int) : Int;
+  @:overload(function(path : String, mode : Int, cb : ResultStatus<Bool>) : Req {})
+  static function mkdir(path : String, mode :Int) : Bool;
 
   @:native("fs_mkdtemp")
-  @:overload(function(data : String, cb : UvFsCb) : Bool {})
+  @:overload(function(data : String, cb : UvFsCb) : Req {})
   static function mkdtemp(data : String) : Int;
 
   @:native("fs_rmdir")
-  @:overload(function(path : String, cb : UvFsCb) : Bool {})
+  @:overload(function(path : String, cb : UvFsCb) : Req {})
   static function rmdir(path : String) : Int;
 
   @:native("fs_scandir")
-  @:overload(function(path : String, cb : UvFsCb) : Bool {})
+  @:overload(function(path : String, cb : UvFsCb) : Req {})
   static function scandir(path : String) : ScanDirMarker;
 
   @:native("fs_scandir_next")
   static function scandir_next(scandir : ScanDirMarker) : ScandirNext;
 
   @:native("fs_stat")
-  @:overload(function(path : String, cb : ResultStatus<Stat>) : Bool {})
-  static function stat(path : String) : Stat;   
+  @:overload(function(path : String, cb : ResultStatus<Stat>) : Req {})
+  static function stat(path : String) : Stat;
+
+  @:native("fs_fstat")
+  @:overload(function(descriptor : FileDescriptor, cb : ResultStatus<Stat>) : Req {})
+  static function fstat(descriptor : FileDescriptor) : Stat;
+
+  @:native("fs_lstat")
+  @:overload(function(path : String, cb : ResultStatus<Stat>) : Req {})
+  static function lstat(path : String) : Stat;
+
+  @:native("fs_rename")
+  @:overload(function(path : String, newpath : String, cb : ResultStatus<Bool>) : Req {})
+  static function rename(path : String, newpath : String) : Bool;
+
+  @:native("fs_fsync")
+  @:overload(function(descriptor : FileDescriptor, cb : ResultStatus<Bool>) : Req {})
+  static function fsync(descriptor : FileDescriptor) : Bool;
+
+  @:native("fs_fdatasync")
+  @:overload(function(descriptor : FileDescriptor, cb : ResultStatus<Bool>) : Req {})
+  static function fdatasync(descriptor : FileDescriptor) : Bool;
+
+  @:native("fs_ftruncate")
+  @:overload(function(descriptor : FileDescriptor, offset : Int, cb : ResultStatus<Bool>) : Req {})
+  static function ftruncate(descriptor : FileDescriptor, offset : Int) : Bool;
+
+  @:native("fs_sendfile")
+  @:overload(function(fin : FileDescriptor, fout : FileDescriptor, cb : ResultStatus<Int>) : Req {})
+  static function sendfile(fin : FileDescriptor, fout : FileDescriptor) : Int;
+
+  @:native("fs_access")
+  @:overload(function(path : String, mode : Int, cb : ResultStatus<Bool>) : Req {})
+  static function access(path : String, mode :Int) : Bool;
+
+  @:native("fs_chmod")
+  @:overload(function(path : String, mode : Int, cb : ResultStatus<Bool>) : Req {})
+  static function chmod(path : String, mode :Int) : Bool;
+
+  @:native("fs_fchmod")
+  @:overload(function(descriptor : FileDescriptor, mode : Int, cb : ResultStatus<Bool>) : Req {})
+  static function fchmod(descriptor : FileDescriptor, mode :Int) : Bool;
+
+  @:native("fs_futime")
+  @:overload(function(descriptor : FileDescriptor, actime : Int, modtime : Int, cb : ResultStatus<Bool>) : Req {})
+  static function futime(descriptor : FileDescriptor, actime : Int, modtime : Int) : Bool;
+
+  @:native("fs_utime")
+  @:overload(function(path : String, actime : Int, modtime : Int, cb : ResultStatus<Bool>) : Req {})
+  static function utime(path : String, actime : Int, modtime : Int) : Bool;
+
+  @:native("fs_link")
+  @:overload(function(oldpath : String, newpath : String, cb : ResultStatus<Bool>) : Req {})
+  static function link(oldpath : String, newpath : String) : Bool;
+
+  @:native("fs_symlink")
+  @:overload(function(oldpath : String, newpath : String, flags : Int, cb : ResultStatus<Bool>) : Req {})
+  static function symlink(oldpath : String, newpath : String, flags : Int) : Bool;
+
+  // @:native("fs_readlink")
+  // @:overload(function(path : String, cb : ResultStatus<String>) : Req {})
+  // static function readlink(path : String) : String;
+
+  @:native("fs_realpath")
+  @:overload(function(path : String, cb : ResultStatus<String>) : Req{})
+  static function realpath(path : String) : String;
+
+  @:native("fs_chown")
+  @:overload(function(path : String, uid : Int, gid : Int, cb : ResultStatus<Bool>) : Req {})
+  static function chown(path : String, uid : Int, gid : Int) : Bool;
+
+  @:native("fs_fchown")
+  @:overload(function(descriptor : FileDescriptor, uid : Int, gid : Int, cb : ResultStatus<Bool>) : Req {})
+  static function fchown(descriptor : FileDescriptor, uid : Int, gid : Int) : Bool;
 
 }
 
 extern class ScanDirMarker {}
+
+@:luaRequire("luv")
+extern class Dns {
+  @:overload(function(node : String, service : String, ?hints : AddrInfo, cb : ResultStatus<Table<Int, AddrInfo>>) : Req {})
+  public static function getaddrinfo(node : String, service : String, ?hints : AddrInfo ) : Table<Int,AddrInfo>;
+
+  @:overload(function(ip: String, port : Int, family : String, cb : ResultStatus<AddrInfo>) : Req {})
+  public static function getnameinfo(info:AddrInfo) : String;
+}
+
+@:luaRequire("luv")
+extern class Misc {
+  public static function chdir(path : String) : Bool;
+
+  public static function os_homedir() : String;
+  public static function os_tmpdir() : String;
+  public static function os_get_passwd() : String;
+  public static function cpu_info() : Table<Int,CpuInfo>;
+
+  public static function cwd() : String;
+  public static function exepath() : String;
+  public static function get_process_title() : String;
+  public static function get_total_memory() : Int;
+  public static function get_free_memory() : Int;
+  public static function getpid() : Int;
+
+  // TODO Windows only?
+  public static function getuid() : Int;
+  public static function setuid(from : Int, to : Int) : String;
+  public static function getgid() : Int;
+  public static function setgid(from : Int, to : Int) : Void;
+
+  public static function getrusage() : ResourceUsage;
+  public static function guess_handle(handle : Int) : String;
+  public static function hrtime() : Float;
+
+  // TODO: implement this
+  // public static function interface_addresses() : String;
+
+  public static function loadavg() : Float;
+  public static function resident_set_memory() : Int;
+  public static function set_process_title(title : String) : Bool;
+  public static function uptime() : Int;
+  public static function version() : Int;
+  public static function version_string() : String;
+
+  // TODO : Windows only
+  public static function print_all_handles() : Table<Int,String>;
+  public static function print_active_handles() : Table<Int,String>;
+
+}
+
 
 
 @:multiType
@@ -348,7 +472,7 @@ abstract Open(String) {
   var AppendNewFile            = "ax";
 }
 
-typedef Stat = { 
+typedef Stat = {
   ino       : Int,
   ctime     : TimeStamp,
   uid       : Int,
@@ -373,3 +497,47 @@ typedef TimeStamp = {
   nsec : Int
 }
 
+typedef AddrInfo = {
+    ?ip       : String,
+	?addr     : String,
+	?port     : Int,
+	?family   : String,
+	?socktype : String
+}
+
+typedef CpuInfo = {
+  model : String,
+  times : CpuTimes,
+  speed : Int
+}
+
+typedef CpuTimes = {
+  sys  : Int,
+  idle : Int,
+  irq  : Int,
+  user : Int
+}
+
+typedef ResourceUsage = {
+  nivcsw   : Int,
+  maxrss   : Int,
+  msgrcv   : Int,
+  isrss    : Int,
+  inblock  : Int,
+  ixrss    : Int,
+  nvcsw    : Int,
+  nsignals : Int,
+  minflt   : Int,
+  nswap    : Int,
+  msgsnd   : Int,
+  oublock  : Int,
+  majflt   : Int,
+  stime    : MicroTimeStamp,
+  idrss    : Int,
+  utime    : MicroTimeStamp
+}
+
+typedef MicroTimeStamp = {
+  usec : Int,
+  sec : Int
+}
