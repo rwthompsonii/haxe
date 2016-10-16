@@ -27,7 +27,6 @@ import lua.Lua;
 import lua.Table;
 import lua.TableTools;
 import lua.Os;
-import lua.lib.lfs.Lfs;
 import lua.FileHandle;
 import lua.Io;
 import lua.Boot;
@@ -105,39 +104,31 @@ class Sys {
 		return haxe.io.Path.join([getCwd(), Lua.arg[0]]);
 	}
 
-	public inline static function getCwd() : String {
-		return lua.lib.lfs.Lfs.currentdir();
-	}
+	public inline static function getCwd() : String 
+		return lua.lib.luv.Misc.cwd();
 
-	public inline static function setCwd(s : String) : Void {
-		lua.lib.lfs.Lfs.chdir(s);
-	}
+	public inline static function setCwd(s : String) : Void 
+		lua.lib.luv.Misc.chdir(s);
 
 	public inline static function getEnv(s : String) : String {
 		return lua.Os.getenv(s);
 	}
-	public inline static function putEnv(s : String, v : String ) : Void {
-		throw "not supported";
-	}
+	public inline static function putEnv(s : String, v : String ) : Void
+		lua.lib.lpath.Fs.setenv(s,v);
 
 	public inline static function setTimeLocale(loc : String) : Bool  {
 		// TODO Verify
 		return lua.Os.setlocale(loc) != null;
 	}
 
-	public static function sleep(seconds : Float) : Void {
-		if (seconds <= 0) return;
-		if (Sys.systemName() == "Windows") {
-			Sys.command("ping -n " + (seconds+1) + " localhost > NUL");
-		} else {
-			Sys.command('sleep $seconds');
-		}
-	}
+	public static function sleep(seconds : Float) : Void
+		lua.lib.luv.Thread.sleep(Math.floor(seconds * 1000));
 
 
 	public inline static function stderr() : haxe.io.Output return new FileOutput(Io.stderr);
 	public inline static function stdin()  : haxe.io.Input return new FileInput(Io.stdin);
 	public inline static function stdout() : haxe.io.Output return new FileOutput(Io.stdout);
 
-	public static function time() : Float return lua.Os.time();
+	public static function time() : Float
+		return lua.lib.chronos.Chronos.nanotime();
 }
