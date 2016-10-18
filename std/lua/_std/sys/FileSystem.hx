@@ -77,7 +77,8 @@ class FileSystem {
 		var scandir = lua.lib.luv.fs.FileSystem.scandir(path);
 
 		var itr = function(){
-			return lua.lib.luv.fs.FileSystem.scandir_next(scandir).name;
+			var k = lua.lib.luv.fs.FileSystem.scandir_next(scandir).name;
+			return k;
 		}
 		return lua.Lib.fillArray(itr);
 	}

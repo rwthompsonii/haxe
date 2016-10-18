@@ -1,7 +1,7 @@
 package lua.lib.luv.fs;
 import lua.lib.luv.fs.Open;
 
-@:luaRequestuire("luv")
+@:luaRequire("luv")
 extern class FileSystem {
   @:native("fs_close")
   @:overload(function(file : FileDescriptor, cb : String->Bool->Void) : Request {})
@@ -124,7 +124,7 @@ extern class ScanDirMarker {}
 typedef FileDescriptor = Int;
 
 
-@:multiType
+@:multiReturn
 extern class ScandirNext {
   var name : String;
   var type : String;

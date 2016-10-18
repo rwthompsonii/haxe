@@ -53,7 +53,7 @@ class Sys {
 #elseif (lua_ver >= 5.2)
 		return Os.execute(cmd).status;
 #else
-		var ret = TableTools.pack(untyped os.execute(cmd));
+		var ret = TableTools.pack(untyped Os.execute(cmd));
 		if (ret[3] != null) return ret[3]
 		else return ret[1];
 #end
