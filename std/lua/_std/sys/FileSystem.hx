@@ -26,6 +26,7 @@ import lua.Os;
 import lua.Lib;
 import lua.Table;
 import haxe.io.Path;
+typedef LFileSystem = lua.lib.luv.fs.FileSystem;
 
 class FileSystem {
 	public static function exists( path : String ) : Bool {
@@ -45,7 +46,7 @@ class FileSystem {
 	}
 
 	public inline static function stat( path : String ) : FileStat {
-		var l =  lua.lib.luv.fs.FileSystem.stat(path);
+		var l =  LFileSystem.stat(path);
 		return {
 			gid   : l.gid,
 			uid   : l.uid,
@@ -76,24 +77,35 @@ class FileSystem {
 	}
 
 	public inline static function readDirectory( path : String ) : Array<String> {
-		var scandir = lua.lib.luv.fs.FileSystem.scandir(path);
+		var scandir = LFileSystem.scandir(path);
 
 		var itr = function(){
-			var k = lua.lib.luv.fs.FileSystem.scandir_next(scandir).name;
+			var k = LFileSystem.scandir_next(scandir).name;
 			return k;
 		}
 		return lua.Lib.fillArray(itr);
 	}
 
 	public inline static function isDirectory( path : String ) : Bool {
-		return  lua.lib.luv.fs.FileSystem.stat(path).type ==  "directory";
+		return  LFileSystem.stat(path).type ==  "directory";
 	}
 
 	public inline static function deleteDirectory( path : String ) : Void {
-		lua.lib.luv.fs.FileSystem.rmdir(path);
+		LFileSystem.rmdir(path);
 	}
 
 	public inline static function createDirectory( path : String ) : Void {
-		lua.lib.luv.fs.FileSystem.mkdir(path, 511);
+
+		var path = haxe.io.Path.addTrailingSlash(path);
+		var _p = null;
+		var parts = [];
+		while (path != (_p = haxe.io.Path.directory(path))) {
+			parts.unshift(path);
+			path = _p;
+		}
+		for (part in parts) {
+			if (part.charCodeAt(part.length - 1) != ":".code && !exists(part) && !LFileSystem.mkdir( part, 511 ))
+				throw "Could not create directory:" + part;
+		}
 	}
 }
