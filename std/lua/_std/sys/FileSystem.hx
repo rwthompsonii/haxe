@@ -66,7 +66,9 @@ class FileSystem {
 	}
 
 	public inline static function absolutePath( relPath : String ) : String {
-		return lua.lib.luv.fs.FileSystem.realpath(relPath);
+		var pwd = lua.lib.luv.Misc.cwd();
+		if (pwd == null) return relPath;
+		return Path.join([pwd, relPath]);
 	}
 
 	public inline static function deleteFile( path : String ) : Void {
