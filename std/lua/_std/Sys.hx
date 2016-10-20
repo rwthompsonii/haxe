@@ -104,10 +104,10 @@ class Sys {
 		return haxe.io.Path.join([getCwd(), Lua.arg[0]]);
 	}
 
-	public inline static function getCwd() : String 
+	public inline static function getCwd() : String
 		return lua.lib.luv.Misc.cwd();
 
-	public inline static function setCwd(s : String) : Void 
+	public inline static function setCwd(s : String) : Void
 		lua.lib.luv.Misc.chdir(s);
 
 	public inline static function getEnv(s : String) : String {
@@ -130,5 +130,5 @@ class Sys {
 	public inline static function stdout() : haxe.io.Output return new FileOutput(Io.stdout);
 
 	public static function time() : Float
-		return lua.lib.chronos.Chronos.nanotime();
+		return lua.lib.luasocket.Socket.gettime();
 }

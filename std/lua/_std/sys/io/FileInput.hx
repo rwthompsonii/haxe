@@ -52,6 +52,7 @@ class FileInput extends haxe.io.Input {
 	}
 
 	inline public function eof() : Bool {
+		trace(f.read(0) + " is the value for f.read(0)");
 		return f.read(0) == null;
 	}
 

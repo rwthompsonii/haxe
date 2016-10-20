@@ -476,9 +476,8 @@ class RunCi {
 		runCommand("pip", ["install", "--user", "cpp-coveralls"]);
 		runCommand("luarocks", ["install", "lrexlib-pcre", "2.7.2-1", "--server=https://luarocks.org/dev"]);
 		runCommand("luarocks", ["install", "luv", "1.9.1-0", "--server=https://luarocks.org/dev"]);
-		runCommand("luarocks", ["install", "chronos", "0.2-1", "--server=https://luarocks.org/dev"]);
+		runCommand("luarocks", ["install", "luasocket", "2.0.2-6", "--server=https://luarocks.org/dev"]);
 		runCommand("luarocks", ["install", "lpath", "0.1.0-1", "--server=https://luarocks.org/dev"]);
-		runCommand("luarocks", ["install", "luautf8", "--server=https://luarocks.org/dev"]);
 
 		// we did user land installs of luarocks and lua.  We need to point lua
 		// to the luarocks install using the luarocks path and env variables
