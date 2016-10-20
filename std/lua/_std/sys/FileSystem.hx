@@ -53,7 +53,7 @@ class FileSystem {
 			rdev  : l.rdev,
 			size  : l.size,
 			nlink : l.nlink,
-			mtime : Date.fromTime(l.mtime.sec + l.mtime.nsec/10000000),
+			mtime : Date.fromTime(l.mtime.sec + l.mtime.nsec/1000000),
 			mode  : l.mode,
 			ino   : l.ino,
 			dev   : l.dev,
@@ -79,10 +79,7 @@ class FileSystem {
 	public inline static function readDirectory( path : String ) : Array<String> {
 		var scandir = LFileSystem.scandir(path);
 
-		var itr = function(){
-			var k = LFileSystem.scandir_next(scandir).name;
-			return k;
-		}
+		var itr = function() return LFileSystem.scandir_next(scandir).name;
 		return lua.Lib.fillArray(itr);
 	}
 
