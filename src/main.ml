@@ -159,7 +159,7 @@ let htmlescape s =
 	s
 
 let reserved_flags = [
-	"cross";"js";"lua";"neko";"flash";"php";"cpp";"cs";"java";"python";
+"cross";"js";"lua";"neko";"flash";"php";"cpp";"cs";"java";"swift";"python";
 	"as3";"swc";"macro";"sys"
 	]
 
@@ -310,6 +310,7 @@ let rec read_type_path com p =
 			loop path p
 		) (all_files())
 	) com.java_libs;
+    (*insert com.swift_libs here if necessary*)
 	List.iter (fun (path,std,all_files,lookup) ->
 		List.iter (fun (path, name) ->
 			if path = p then classes := name :: !classes else
@@ -1032,7 +1033,7 @@ and do_connect host port args =
 
 and init ctx =
 	let usage = Printf.sprintf
-		"Haxe Compiler %s - (C)2005-2016 Haxe Foundation\n Usage : haxe%s -main <class> [-swf|-js|-neko|-php|-cpp|-cppia|-as3|-cs|-java|-python|-hl|-lua] <output> [options]\n Options :"
+		"Haxe Compiler %s - (C)2005-2016 Haxe Foundation\n Usage : haxe%s -main <class> [-swf|-js|-neko|-php|-cpp|-cppia|-as3|-cs|-java|-swift|-python|-hl|-lua] <output> [options]\n Options :"
 		s_version (if Sys.os_type = "Win32" then ".exe" else "")
 	in
 	let com = ctx.com in
@@ -1131,6 +1132,10 @@ try
 			cp_libs := "hxjava" :: !cp_libs;
 			set_platform Java dir;
 		),"<directory> : generate Java code into target directory");
+        ("-swift",Arg.String (fun dir ->
+			(*cp_libs := "hxjava" :: !cp_libs; TODO insert hxswift here if necessary *)
+			set_platform Swift dir;
+		),"<directory> : generate Swift code into target directory");
 		("-python",Arg.String (fun dir ->
 			set_platform Python dir;
 		),"<file> : generate Python code as target file");
@@ -1201,6 +1206,7 @@ try
 			let std = file = "lib/hxjava-std.jar" in
 			arg_delays := (fun () -> Genjava.add_java_lib com file std) :: !arg_delays;
 		),"<file> : add an external JAR or class directory library");
+        (*TODO support -swift-lib*)
 		("-net-lib",Arg.String (fun file ->
 			let file, is_std = match ExtString.String.nsplit file "@" with
 				| [file] ->
@@ -1216,7 +1222,7 @@ try
 		),"<file> : add a root std .NET DLL search path");
 		("-c-arg",Arg.String (fun arg ->
 			com.c_args <- arg :: com.c_args
-		),"<arg> : pass option <arg> to the native Java/C# compiler");
+		),"<arg> : pass option <arg> to the native Java/C#/Swift compiler");
 		("-x", Arg.String (fun file ->
 			let neko_file = file ^ ".n" in
 			set_platform Neko neko_file;
@@ -1261,6 +1267,7 @@ try
 					if not std then
 						List.iter (fun path -> if path <> (["java";"lang"],"String") then classes := path :: !classes) (all_files())
 				) com.java_libs;
+                (*TODO: support swift_libs here eventually*)
 				List.iter (fun (_,std,all_files,_) ->
 					if not std then
 						List.iter (fun path -> classes := path :: !classes) (all_files())
@@ -1563,6 +1570,15 @@ try
 			);
 			Genjava.before_generate com;
 			add_std "java"; "java"
+        | Swift ->
+			(* let old_flush = ctx.flush in
+			ctx.flush <- (fun () ->
+				List.iter (fun (_,_,close,_,_) -> close()) com.swift_libs;
+				com.swift_libs <- [];
+				old_flush()
+			);
+			Genswift.before_generate com; TODO: uncomment this code when swift_libs become a thing*)
+			add_std "swift"; "swift"
 		| Python ->
 			add_std "python";
 			"python"
@@ -1638,7 +1654,7 @@ try
 		if not !no_output then begin match com.platform with
 			| Neko when !interp -> ()
 			| Cpp when Common.defined com Define.Cppia -> ()
-			| Cpp | Cs | Java | Php -> Common.mkdir_from_path (com.file ^ "/.")
+			| Cpp | Cs | Java | Swift | Php -> Common.mkdir_from_path (com.file ^ "/.")
 			| _ -> Common.mkdir_from_path com.file
 		end;
 		if not !no_output then begin
@@ -1670,7 +1686,9 @@ try
 					Gencs.generate,"cs"
 				| Java ->
 					Genjava.generate,"java"
-				| Python ->
+                | Swift -> 
+                    Genswift.generate,"swift"
+                | Python ->
 					Genpy.generate,"python"
 				| Hl ->
 					Genhl.generate,"hl"

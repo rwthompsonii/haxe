@@ -80,8 +80,11 @@ class Log {
 			}
 			else
 				untyped __trace(v,infos);
-		#elseif (cs || java || lua)
+		#elseif (cs || java || lua || swift)
 			var str:String = null;
+            #if (swift)
+                v = cast(v, String);//swift doesn't like Dynamic.
+            #end
 			if (infos != null) {
 				str = infos.fileName + ":" + infos.lineNumber + ": " + v;
 				if (infos.customParams != null)
@@ -97,6 +100,8 @@ class Log {
 			untyped __java__("java.lang.System.out.println(str)");
 			#elseif lua
 			untyped __define_feature__("use._hx_print",_hx_print(Std.string(str)));
+            #elseif swift
+            untyped __swift__('print(str)');
 			#end
 		#elseif (python)
 			var str:String = null;

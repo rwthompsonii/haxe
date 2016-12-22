@@ -1198,6 +1198,14 @@ let configure gen =
 			| _ -> (params, el)
 	in
 
+    (*let rec extract_tparams params el =
+		match el with
+			| ({ eexpr = TLocal({ v_name = "$type_param" }) } as tp) :: tl ->
+				extract_tparams (tp.etype :: params) tl
+            | _ :: tl -> extract_tparams params tl
+            | [] -> (params, el)
+	in*)
+
 	let line_directive =
 		if Common.defined gen.gcon Define.RealPosition then
 			fun w p -> ()
